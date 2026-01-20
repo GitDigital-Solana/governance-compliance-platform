@@ -1,0 +1,104 @@
+### **docker-compose.yml**
+
+```yaml
+version: '3.8'
+
+services:
+  # API Gateway
+  api-gateway:
+    build: ./kotlin
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=governance
+      - DB_USER=governance
+      - DB_PASSWORD=governance
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - governance-network
+
+  # Rules Engine
+  rules-engine:
+    build: ./go
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_HOST=redis
+      - POLICY_REGISTRY_URL=http://api-gateway:8080
+    depends_on:
+      - api-gateway
+      - redis
+    networks:
+      - governance-network
+
+  # Documentation Generator
+  docs-generator:
+    build: ./python
+    volumes:
+      - ./policies:/app/policies
+      - ./docs:/app/docs
+    environment:
+      - API_URL=http://api-gateway:8080
+    networks:
+      - governance-network
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=governance
+      - POSTGRES_USER=governance
+      - POSTGRES_PASSWORD=governance
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - governance-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - governance-network
+
+  # Monitoring (Prometheus + Grafana)
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - governance-network
+
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - governance-network
+
+volumes:
+  postgres-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  governance-network:
+    driver: bridge
