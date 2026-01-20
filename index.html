@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Governance & Compliance Platform</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <h1>Governance & Compliance Platform</h1>
+            </div>
+            <nav class="navbar">
+                <a href="#overview" class="nav-link active">Overview</a>
+                <a href="#repositories" class="nav-link">Repositories</a>
+                <a href="#documentation" class="nav-link">Documentation</a>
+                <a href="#tools" class="nav-link">Tools</a>
+            </nav>
+        </header>
+
+        <main class="main-content">
+            <section id="overview" class="section active">
+                <div class="dashboard">
+                    <div class="stats">
+                        <div class="stat-card">
+                            <i class="fas fa-cogs"></i>
+                            <h3>Rules Engine</h3>
+                            <p class="stat-number" id="rules-count">0</p>
+                            <p class="stat-label">Active Rules</p>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-file-contract"></i>
+                            <h3>Policies</h3>
+                            <p class="stat-number" id="policies-count">0</p>
+                            <p class="stat-label">Registered Policies</p>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-check-circle"></i>
+                            <h3>Compliance</h3>
+                            <p class="stat-number" id="compliance-rate">0%</p>
+                            <p class="stat-label">Overall Compliance</p>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <h3>Violations</h3>
+                            <p class="stat-number" id="violations-count">0</p>
+                            <p class="stat-label">Active Violations</p>
+                        </div>
+                    </div>
+
+                    <div class="quick-actions">
+                        <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
+                        <div class="action-buttons">
+                            <button class="action-btn" onclick="evaluateResource()">
+                                <i class="fas fa-search"></i>
+                                Evaluate Resource
+                            </button>
+                            <button class="action-btn" onclick="createPolicy()">
+                                <i class="fas fa-plus"></i>
+                                Create Policy
+                            </button>
+                            <button class="action-btn" onclick="generateReport()">
+                                <i class="fas fa-chart-bar"></i>
+                                Generate Report
+                            </button>
+                            <button class="action-btn" onclick="openValidator()">
+                                <i class="fas fa-check"></i>
+                                Validate Schema
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="repositories" class="section">
+                <h2><i class="fas fa-code-branch"></i> Core Repositories</h2>
+                <div class="repo-grid">
+                    <div class="repo-card">
+                        <h3><i class="fas fa-project-diagram"></i> governance-rules-engine</h3>
+                        <p>Central engine for evaluating policies against resources with real-time processing.</p>
+                        <div class="repo-meta">
+                            <span class="tag">Go</span>
+                            <span class="tag">REST API</span>
+                            <span class="tag badge-success">Active</span>
+                        </div>
+                        <button class="repo-btn" onclick="openRepo('rules-engine')">
+                            View Details <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                    <div class="repo-card">
+                        <h3><i class="fas fa-database"></i> policy-registry</h3>
+                        <p>Registry for storing, versioning, and managing policies across environments.</p>
+                        <div class="repo-meta">
+                            <span class="tag">Kotlin</span>
+                            <span class="tag">PostgreSQL</span>
+                            <span class="tag badge-success">Active</span>
+                        </div>
+                        <button class="repo-btn" onclick="openRepo('policy-registry')">
+                            View Details <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                    <div class="repo-card">
+                        <h3><i class="fas fa-file-code"></i> governance-policy-schemas</h3>
+                        <p>JSON schemas and validation rules for policy definition and compliance checking.</p>
+                        <div class="repo-meta">
+                            <span class="tag">JSON Schema</span>
+                            <span class="tag">Python</span>
+                            <span class="tag badge-warning">Beta</span>
+                        </div>
+                        <button class="repo-btn" onclick="openRepo('policy-schemas')">
+                            View Details <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                    <div class="repo-card">
+                        <h3><i class="fas fa-book"></i> governance-docs-generator</h3>
+                        <p>Automated documentation generation from policies and compliance rules.</p>
+                        <div class="repo-meta">
+                            <span class="tag">Python</span>
+                            <span class="tag">Markdown</span>
+                            <span class="tag badge-success">Active</span>
+                        </div>
+                        <button class="repo-btn" onclick="openRepo('docs-generator')">
+                            View Details <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-tools"></i> Support Repositories</h2>
+                <div class="repo-grid">
+                    <div class="repo-card">
+                        <h3><i class="fas fa-graduation-cap"></i> governance-examples</h3>
+                        <p>Example policies, implementations, and best practices.</p>
+                        <div class="repo-meta">
+                            <span class="tag">Examples</span>
+                            <span class="tag badge-info">Documentation</span>
+                        </div>
+                        <button class="repo-btn" onclick="openRepo('examples')">
+                            View Details <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                    <div class="repo-card">
+                        <h3><i class="fas fa-vial"></i> governance-tests</h3>
+                        <p>Test suites, validation tools, and integration tests.</p>
+                        <div class="repo-meta">
+                            <span class="tag">Testing</span>
+                            <span class="tag">CI/CD</span>
+                            <span class="tag badge-success">Active</span>
+                        </div>
+                        <button class="repo-btn" onclick="openRepo('tests')">
+                            View Details <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                    <div class="repo-card">
+                        <h3><i class="fas fa-flag"></i> governance-standards</h3>
+                        <p>Industry standards, benchmarks, and compliance frameworks.</p>
+                        <div class="repo-meta">
+                            <span class="tag">ISO 27001</span>
+                            <span class="tag">GDPR</span>
+                            <span class="tag badge-info">Reference</span>
+                        </div>
+                        <button class="repo-btn" onclick="openRepo('standards')">
+                            View Details <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="documentation" class="section">
+                <h2><i class="fas fa-book-open"></i> Documentation</h2>
+                <div class="docs-container">
+                    <div class="docs-sidebar">
+                        <h3>Wiki Pages</h3>
+                        <ul class="docs-list">
+                            <li><a href="#" onclick="loadWiki('getting-started')"><i class="fas fa-play-circle"></i> Getting Started</a></li>
+                            <li><a href="#" onclick="loadWiki('architecture')"><i class="fas fa-sitemap"></i> Architecture</a></li>
+                            <li><a href="#" onclick="loadWiki('api-reference')"><i class="fas fa-code"></i> API Reference</a></li>
+                            <li><a href="#" onclick="loadWiki('policies')"><i class="fas fa-file-contract"></i> Policy Guide</a></li>
+                            <li><a href="#" onclick="loadWiki('contributing')"><i class="fas fa-hands-helping"></i> Contributing</a></li>
+                            <li><a href="#" onclick="loadWiki('troubleshooting')"><i class="fas fa-wrench"></i> Troubleshooting</a></li>
+                        </ul>
+                    </div>
+                    <div class="docs-content">
+                        <div id="wiki-content">
+                            <h3>Welcome to Governance Platform Docs</h3>
+                            <p>Select a topic from the sidebar to view documentation.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tools" class="section">
+                <h2><i class="fas fa-wrench"></i> Tools & Utilities</h2>
+                <div class="tools-grid">
+                    <div class="tool-card">
+                        <i class="fas fa-terminal"></i>
+                        <h3>CLI Tool</h3>
+                        <p>Command-line interface for policy management</p>
+                        <pre><code>governance-cli --help</code></pre>
+                    </div>
+                    <div class="tool-card">
+                        <i class="fas fa-server"></i>
+                        <h3>API Server</h3>
+                        <p>REST API for integration with other services</p>
+                        <pre><code>POST /api/v1/evaluate</code></pre>
+                    </div>
+                    <div class="tool-card">
+                        <i class="fas fa-code"></i>
+                        <h3>SDKs</h3>
+                        <p>Client libraries for multiple languages</p>
+                        <div class="sdk-badges">
+                            <span class="sdk-badge">Python</span>
+                            <span class="sdk-badge">Go</span>
+                            <span class="sdk-badge">Java</span>
+                            <span class="sdk-badge">JavaScript</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>Governance & Compliance Platform © 2024</p>
+            <div class="footer-links">
+                <a href="#"><i class="fab fa-github"></i> GitHub</a>
+                <a href="#"><i class="fas fa-book"></i> Docs</a>
+                <a href="#"><i class="fas fa-envelope"></i> Contact</a>
+            </div>
+        </footer>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
