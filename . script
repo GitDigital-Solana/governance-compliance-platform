@@ -1,0 +1,503 @@
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize stats with random data (simulated)
+    updateDashboardStats();
+    
+    // Set up navigation
+    setupNavigation();
+    
+    // Load initial wiki content
+    loadWiki('getting-started');
+    
+    // Set up modal
+    setupModal();
+});
+
+function updateDashboardStats() {
+    // Simulate loading stats
+    setTimeout(() => {
+        document.getElementById('rules-count').textContent = Math.floor(Math.random() * 100) + 50;
+        document.getElementById('policies-count').textContent = Math.floor(Math.random() * 200) + 100;
+        document.getElementById('compliance-rate').textContent = `${Math.floor(Math.random() * 30) + 70}%`;
+        document.getElementById('violations-count').textContent = Math.floor(Math.random() * 20);
+    }, 500);
+}
+
+function setupNavigation() {
+    const navLinks = document.querySelectorAll('.nav-link');
+    const sections = document.querySelectorAll('.section');
+    
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            // Remove active class from all links and sections
+            navLinks.forEach(l => l.classList.remove('active'));
+            sections.forEach(s => s.classList.remove('active'));
+            
+            // Add active class to clicked link
+            link.classList.add('active');
+            
+            // Show corresponding section
+            const targetId = link.getAttribute('href').substring(1);
+            document.getElementById(targetId).classList.add('active');
+        });
+    });
+}
+
+function evaluateResource() {
+    showModal(`
+        <h2><i class="fas fa-search"></i> Evaluate Resource</h2>
+        <div class="form-group">
+            <label for="resource-type">Resource Type:</label>
+            <select id="resource-type" class="form-control">
+                <option value="ec2">EC2 Instance</option>
+                <option value="s3">S3 Bucket</option>
+                <option value="iam">IAM Role</option>
+                <option value="rds">RDS Database</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="resource-config">Resource Configuration (JSON):</label>
+            <textarea id="resource-config" class="form-control" rows="8">
+{
+  "type": "aws_s3_bucket",
+  "properties": {
+    "versioning": true,
+    "encryption": "AES256",
+    "public_access_block": true,
+    "logging": true
+  },
+  "tags": {
+    "environment": "production",
+    "compliance": "pci-dss"
+  }
+}</textarea>
+        </div>
+        <button class="action-btn" onclick="runEvaluation()">
+            <i class="fas fa-play"></i> Run Evaluation
+        </button>
+    `);
+}
+
+function createPolicy() {
+    showModal(`
+        <h2><i class="fas fa-plus"></i> Create New Policy</h2>
+        <div class="form-group">
+            <label for="policy-name">Policy Name:</label>
+            <input type="text" id="policy-name" class="form-control" placeholder="Enter policy name">
+        </div>
+        <div class="form-group">
+            <label for="policy-type">Policy Type:</label>
+            <select id="policy-type" class="form-control">
+                <option value="security">Security</option>
+                <option value="compliance">Compliance</option>
+                <option value="cost">Cost Optimization</option>
+                <option value="operational">Operational Excellence</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="policy-yaml">Policy Definition (YAML):</label>
+            <textarea id="policy-yaml" class="form-control" rows="12">
+apiVersion: governance/v1
+kind: Policy
+metadata:
+  name: s3-encryption-required
+  description: "Require encryption on all S3 buckets"
+  severity: high
+  category: security
+  
+spec:
+  targetResource: aws_s3_bucket
+  rules:
+    - name: require-encryption
+      condition: $.properties.encryption != null
+      message: "S3 bucket must have encryption enabled"
+    
+    - name: require-versioning
+      condition: $.properties.versioning == true
+      message: "S3 bucket must have versioning enabled"
+      
+  remediation:
+    type: terraform
+    template: |
+      resource "aws_s3_bucket" "example" {
+        bucket = var.bucket_name
+        
+        versioning {
+          enabled = true
+        }
+        
+        server_side_encryption_configuration {
+          rule {
+            apply_server_side_encryption_by_default {
+              sse_algorithm = "AES256"
+            }
+          }
+        }
+      }</textarea>
+        </div>
+        <button class="action-btn" onclick="savePolicy()">
+            <i class="fas fa-save"></i> Save Policy
+        </button>
+    `);
+}
+
+function generateReport() {
+    showModal(`
+        <h2><i class="fas fa-chart-bar"></i> Generate Compliance Report</h2>
+        <div class="form-group">
+            <label for="report-period">Report Period:</label>
+            <select id="report-period" class="form-control">
+                <option value="daily">Last 24 Hours</option>
+                <option value="weekly">Last 7 Days</option>
+                <option value="monthly">Last 30 Days</option>
+                <option value="quarterly">Last Quarter</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="report-type">Report Type:</label>
+            <select id="report-type" class="form-control">
+                <option value="summary">Summary Report</option>
+                <option value="detailed">Detailed Report</option>
+                <option value="executive">Executive Summary</option>
+                <option value="audit">Audit Trail</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="report-format">Output Format:</label>
+            <div class="checkbox-group">
+                <label><input type="checkbox" checked> PDF</label>
+                <label><input type="checkbox" checked> HTML</label>
+                <label><input type="checkbox"> CSV</label>
+                <label><input type="checkbox"> JSON</label>
+            </div>
+        </div>
+        <button class="action-btn" onclick="generateReportNow()">
+            <i class="fas fa-file-export"></i> Generate Report
+        </button>
+    `);
+}
+
+function openValidator() {
+    showModal(`
+        <h2><i class="fas fa-check"></i> Policy Schema Validator</h2>
+        <div class="form-group">
+            <label>Upload or paste policy schema:</label>
+            <textarea id="schema-input" class="form-control" rows="10" placeholder="Paste JSON schema here..."></textarea>
+            <input type="file" id="schema-file" class="form-control" accept=".json,.yaml,.yml">
+        </div>
+        <div class="action-buttons" style="margin-top: 1rem;">
+            <button class="action-btn" onclick="validateSchema()">
+                <i class="fas fa-check-circle"></i> Validate Schema
+            </button>
+            <button class="action-btn" onclick="loadExampleSchema()">
+                <i class="fas fa-eye"></i> Load Example
+            </button>
+        </div>
+        <div id="validation-result" style="margin-top: 1rem;"></div>
+    `);
+}
+
+function loadExampleSchema() {
+    document.getElementById('schema-input').value = JSON.stringify({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "Governance Policy Schema",
+        "type": "object",
+        "properties": {
+            "apiVersion": { "type": "string" },
+            "kind": { "type": "string", "const": "Policy" },
+            "metadata": {
+                "type": "object",
+                "properties": {
+                    "name": { "type": "string" },
+                    "description": { "type": "string" },
+                    "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"] }
+                },
+                "required": ["name", "severity"]
+            }
+        },
+        "required": ["apiVersion", "kind", "metadata"]
+    }, null, 2);
+}
+
+function validateSchema() {
+    const input = document.getElementById('schema-input').value;
+    const resultDiv = document.getElementById('validation-result');
+    
+    try {
+        const schema = JSON.parse(input);
+        resultDiv.innerHTML = `
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i>
+                <strong>Validation Successful!</strong>
+                <p>The schema is valid JSON and follows the required structure.</p>
+            </div>
+        `;
+    } catch (error) {
+        resultDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle"></i>
+                <strong>Validation Failed!</strong>
+                <p>${error.message}</p>
+            </div>
+        `;
+    }
+}
+
+function openRepo(repoName) {
+    const repoInfo = {
+        'rules-engine': {
+            title: 'Governance Rules Engine',
+            description: 'Central engine for evaluating policies against resources',
+            language: 'Go',
+            stars: '245',
+            forks: '45',
+            lastUpdate: '2 days ago'
+        },
+        'policy-registry': {
+            title: 'Policy Registry',
+            description: 'Registry for storing and versioning policies',
+            language: 'Kotlin',
+            stars: '189',
+            forks: '32',
+            lastUpdate: '1 week ago'
+        }
+    };
+    
+    const info = repoInfo[repoName] || {
+        title: 'Repository Details',
+        description: 'Detailed information about this repository',
+        language: 'Multiple',
+        stars: 'N/A',
+        forks: 'N/A',
+        lastUpdate: 'Recently'
+    };
+    
+    showModal(`
+        <h2><i class="fas fa-code-branch"></i> ${info.title}</h2>
+        <p>${info.description}</p>
+        
+        <div class="repo-details">
+            <div class="detail-item">
+                <strong>Language:</strong> ${info.language}
+            </div>
+            <div class="detail-item">
+                <strong>Stars:</strong> ${info.stars}
+            </div>
+            <div class="detail-item">
+                <strong>Forks:</strong> ${info.forks}
+            </div>
+            <div class="detail-item">
+                <strong>Last Updated:</strong> ${info.lastUpdate}
+            </div>
+        </div>
+        
+        <h3 style="margin-top: 1.5rem;">Quick Links</h3>
+        <div class="action-buttons" style="margin-top: 1rem;">
+            <button class="action-btn" onclick="window.open('https://github.com/your-org/${repoName}', '_blank')">
+                <i class="fab fa-github"></i> View on GitHub
+            </button>
+            <button class="action-btn" onclick="cloneRepo('${repoName}')">
+                <i class="fas fa-download"></i> Clone Repository
+            </button>
+            <button class="action-btn" onclick="showIssues('${repoName}')">
+                <i class="fas fa-bug"></i> View Issues
+            </button>
+        </div>
+    `);
+}
+
+function loadWiki(page) {
+    const wikiContent = {
+        'getting-started': `
+            <h2><i class="fas fa-play-circle"></i> Getting Started</h2>
+            <h3>Installation</h3>
+            <pre><code># Clone the repository
+git clone https://github.com/your-org/governance-platform.git
+
+# Install dependencies
+cd governance-platform
+make install</code></pre>
+            
+            <h3>Quick Start</h3>
+            <p>1. Start the governance engine:</p>
+            <pre><code>governance-engine start --config config.yaml</code></pre>
+            
+            <p>2. Register your first policy:</p>
+            <pre><code>governance-cli policy register examples/policies/security-baseline.yaml</code></pre>
+            
+            <p>3. Evaluate a resource:</p>
+            <pre><code>governance-cli evaluate --resource my-resource.yaml</code></pre>
+        `,
+        'architecture': `
+            <h2><i class="fas fa-sitemap"></i> Architecture Overview</h2>
+            <h3>System Architecture</h3>
+            <div class="architecture-diagram">
+                <pre>
+┌─────────────────────────────────────────────────────────┐
+│                  Governance Platform                     │
+├─────────────────────────────────────────────────────────┤
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐│
+│  │   API    │  │  Rules   │  │  Policy  │  │   Data   ││
+│  │ Gateway  │◄─┤  Engine  │◄─┤ Registry │◄─┤   Store  ││
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘│
+│       │            │             │              │       │
+│       ▼            ▼             ▼              ▼       │
+│  ┌───────────────────────────────────────────────────┐  │
+│  │              Message Broker (Kafka)               │  │
+│  └───────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────┘
+                </pre>
+            </div>
+            
+            <h3>Components</h3>
+            <ul>
+                <li><strong>API Gateway:</strong> REST API for external integrations</li>
+                <li><strong>Rules Engine:</strong> Evaluates resources against policies</li>
+                <li><strong>Policy Registry:</strong> Manages policy lifecycle and versioning</li>
+                <li><strong>Data Store:</strong> Persistent storage for results and metadata</li>
+                <li><strong>Message Broker:</strong> Event-driven communication between components</li>
+            </ul>
+        `,
+        'api-reference': `
+            <h2><i class="fas fa-code"></i> API Reference</h2>
+            <h3>Authentication</h3>
+            <pre><code>Authorization: Bearer &lt;your-token&gt;</code></pre>
+            
+            <h3>Endpoints</h3>
+            <h4>POST /api/v1/evaluate</h4>
+            <p>Evaluate a resource against registered policies.</p>
+            <pre><code>{
+  "resource": {
+    "type": "aws_s3_bucket",
+    "properties": {...}
+  },
+  "context": {
+    "environment": "production"
+  }
+}</code></pre>
+            
+            <h4>GET /api/v1/policies</h4>
+            <p>List all registered policies.</p>
+            
+            <h4>POST /api/v1/policies</h4>
+            <p>Register a new policy.</p>
+        `,
+        'policies': `
+            <h2><i class="fas fa-file-contract"></i> Policy Guide</h2>
+            <h3>Policy Structure</h3>
+            <pre><code>apiVersion: governance/v1
+kind: Policy
+metadata:
+  name: s3-encryption-required
+  description: "Require encryption on all S3 buckets"
+  severity: high
+  
+spec:
+  targetResource: aws_s3_bucket
+  rules:
+    - name: require-encryption
+      condition: $.properties.encryption != null
+      message: "S3 bucket must have encryption enabled"
+      
+  remediation:
+    type: terraform
+    template: |
+      # Terraform configuration...</code></pre>
+            
+            <h3>Rule Conditions</h3>
+            <p>Conditions use JSONPath expressions to evaluate resources.</p>
+            <ul>
+                <li><code>$.properties.encryption == "AES256"</code></li>
+                <li><code>$.tags.environment == "production"</code></li>
+                <li><code>$.cost.monthly &gt; 1000</code></li>
+            </ul>
+        `
+    };
+    
+    const content = wikiContent[page] || `
+        <h2>Documentation</h2>
+        <p>Select a topic from the sidebar to view documentation.</p>
+    `;
+    
+    document.getElementById('wiki-content').innerHTML = content;
+}
+
+function showModal(content) {
+    document.getElementById('modal-body').innerHTML = content;
+    document.getElementById('modal').style.display = 'block';
+}
+
+function closeModal() {
+    document.getElementById('modal').style.display = 'none';
+}
+
+function setupModal() {
+    const modal = document.getElementById('modal');
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            closeModal();
+        }
+    });
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            closeModal();
+        }
+    });
+}
+
+function runEvaluation() {
+    const resultDiv = document.createElement('div');
+    resultDiv.className = 'evaluation-result';
+    resultDiv.innerHTML = `
+        <div class="alert alert-info">
+            <i class="fas fa-spinner fa-spin"></i>
+            <strong>Running evaluation...</strong>
+        </div>
+    `;
+    
+    document.querySelector('.modal-content').appendChild(resultDiv);
+    
+    setTimeout(() => {
+        resultDiv.innerHTML = `
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i>
+                <strong>Evaluation Complete!</strong>
+                <p>Resource passed 8 out of 10 checks.</p>
+                <div style="margin-top: 1rem;">
+                    <strong>Violations Found:</strong>
+                    <ul>
+                        <li>Missing encryption configuration</li>
+                        <li>Versioning not enabled</li>
+                    </ul>
+                </div>
+            </div>
+        `;
+    }, 2026);
+}
+
+function savePolicy() {
+    alert('Policy saved successfully!');
+    closeModal();
+}
+
+function generateReportNow() {
+    alert('Report generation started. You will receive a notification when complete.');
+    closeModal();
+}
+
+function cloneRepo(repoName) {
+    const command = `git clone https://github.com/your-org/${repoName}.git`;
+    alert(`Run: ${command}`);
+}
+
+function showIssues(repoName) {
+    window.open(`https://github.com/your-org/${repoName}/issues`, '_blank');
+}
+
+// Auto-refresh stats every 30 seconds
+setInterval(updateDashboardStats, 30000);
