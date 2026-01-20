@@ -1,0 +1,79 @@
+.PHONY: help install build test clean deploy docs
+
+help:
+	@echo "Governance & Compliance Platform"
+	@echo ""
+	@echo "Available targets:"
+	@echo "  install     Install all dependencies"
+	@echo "  build       Build all components"
+	@echo "  test        Run all tests"
+	@echo "  clean       Clean build artifacts"
+	@echo "  deploy      Deploy to development"
+	@echo "  docs        Generate documentation"
+
+install:
+	@echo "Installing dependencies..."
+	cd python && pip install -r requirements.txt
+	cd go && go mod download
+	cd kotlin && ./gradlew dependencies
+
+build:
+	@echo "Building components..."
+	cd go && go build -o bin/governance-engine .
+	cd kotlin && ./gradlew build
+	cd python && python -m py_compile *.py
+
+test:
+	@echo "Running tests..."
+	cd go && go test ./...
+	cd kotlin && ./gradlew test
+	cd python && python -m pytest tests/
+
+clean:
+	@echo "Cleaning build artifacts..."
+	rm -rf go/bin/*
+	rm -rf kotlin/build
+	rm -rf python/__pycache__
+	rm -rf docs/generated
+
+deploy:
+	@echo "Deploying to development..."
+	docker-compose down
+	docker-compose build
+	docker-compose up -d
+
+docs:
+	@echo "Generating documentation..."
+	cd python && python docs_generator.py --output-dir ../wiki/generated policies/*.yaml
+
+# Development targets
+dev-api:
+	cd kotlin && ./gradlew run
+
+dev-engine:
+	cd go && go run main.go
+
+dev-docs:
+	cd python && python docs_generator.py --watch policies/
+
+# Database operations
+db-migrate:
+	cd sql && psql -h localhost -U governance -d governance -f migrations/001_initial.sql
+
+db-reset:
+	docker-compose down -v
+	docker-compose up -d postgres
+	sleep 10
+	make db-migrate
+
+# Quality checks
+lint:
+	cd python && black .
+	cd python && flake8
+	cd go && go fmt ./...
+	cd kotlin && ./gradlew ktlintCheck
+
+security:
+	cd python && safety check
+	cd go && gosec ./...
+	cd kotlin && ./gradlew dependencyCheckAnalyze
